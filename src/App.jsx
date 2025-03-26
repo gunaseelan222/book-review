@@ -6,10 +6,7 @@ const Rating = ({ rating }) => {
   return (
     <div className="star-rating">
       {[1, 2, 3, 4, 5].map((star) => (
-        <span
-          key={star}
-          className={`star ${star <= rating ? "filled" : ""}`}
-        >
+        <span key={star} className={`star ${star <= rating ? "filled" : ""}`}>
           ★
         </span>
       ))}
@@ -21,11 +18,36 @@ const Rating = ({ rating }) => {
 const LoginPage = ({ setPage }) => {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    // For simplicity, direct to the Review Platform after "login"
-    setPage("review");
+    setError("");
+    setLoading(true);
+
+    try {
+      const response = await fetch("http://localhost:5000/api/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ username, password }),
+      });
+
+      const data = await response.json();
+      setLoading(false);
+
+      if (!response.ok) {
+        throw new Error(data.message || "Login failed");
+      }
+
+      // Store token (if provided) and navigate to review page
+      localStorage.setItem("token", data.token);
+      alert("Login successful!");
+      setPage("review");
+    } catch (err) {
+      setError(err.message);
+      setLoading(false);
+    }
   };
 
   return (
@@ -67,11 +89,35 @@ const LoginPage = ({ setPage }) => {
 const SignupPage = ({ setPage }) => {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    // For simplicity, direct to the Review Platform after "signup"
-    setPage("review");
+    setError("");
+    setLoading(true);
+
+    try {
+      const response = await fetch("http://localhost:5000/api/auth/signup", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ username, password }),
+      });
+
+      const data = await response.json();
+      setLoading(false);
+
+      if (!response.ok) {
+        throw new Error(data.message || "Signup failed");
+      }
+
+      // On successful signup, redirect to login page
+      alert("Signup successful! Please login.");
+      setPage("login");
+    } catch (err) {
+      setError(err.message);
+      setLoading(false);
+    }
   };
 
   return (
@@ -109,6 +155,7 @@ const SignupPage = ({ setPage }) => {
   );
 };
 
+// Review Platform Page
 function App() {
   const [page, setPage] = useState("login"); // Tracks current page (login, signup, review)
   const [reviews, setReviews] = useState([]);
